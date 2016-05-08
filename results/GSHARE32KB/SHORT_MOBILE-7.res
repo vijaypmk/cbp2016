@@ -1,0 +1,1 @@
+..........................  TRACE 	 : ../traces/SHORT_MOBILE-7.bt9.trace.gz  NUM_INSTRUCTIONS            	 :  140479767  NUM_BR                      	 :   26276670  NUM_UNCOND_BR               	 :    2016522  NUM_CONDITIONAL_BR          	 :   24260148  NUM_MISPREDICTIONS          	 :    1454766  MISPRED_PER_1K_INST         	 :    10.3557

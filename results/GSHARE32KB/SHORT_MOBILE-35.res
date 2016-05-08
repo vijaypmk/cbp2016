@@ -1,0 +1,1 @@
+  TRACE 	 : ../traces/SHORT_MOBILE-35.bt9.trace.gz  NUM_INSTRUCTIONS            	 :    4226507  NUM_BR                      	 :      42501  NUM_UNCOND_BR               	 :        501  NUM_CONDITIONAL_BR          	 :      42000  NUM_MISPREDICTIONS          	 :        504  MISPRED_PER_1K_INST         	 :     0.1192

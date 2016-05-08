@@ -1,0 +1,1 @@
+...........................  TRACE 	 : ../traces/SHORT_SERVER-64.bt9.trace.gz  NUM_INSTRUCTIONS            	 :  209999900  NUM_BR                      	 :   27637800  NUM_UNCOND_BR               	 :    1170396  NUM_CONDITIONAL_BR          	 :   26467404  NUM_MISPREDICTIONS          	 :    1324697  MISPRED_PER_1K_INST         	 :     6.3081
