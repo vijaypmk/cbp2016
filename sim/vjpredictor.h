@@ -566,7 +566,17 @@ public:
   }
   
   bool predict(uint32_t pc) {
-    return pred[getIndex(pc)];
+    //'My changes'
+    uint32_t output = 0;
+    if(pred[getIndex(pc)])
+      output = output + 2;//W(getIndex(PC), i);
+    else
+      output = output - 2;//W(getIndex(PC), i);
+    if(output >= 0)
+      return 1;
+    else
+      return 0;
+    //return pred[getIndex(pc)];
   }
   
   void update(uint32_t pc, bool taken) {
@@ -579,6 +589,9 @@ public:
     pred[getIndex(pc)] = (inter >= 2);
     hyst[getIndex(pc,HSFT)] = ((inter & 1)==1);
   }
+
+  //'My changes'
+
 };
 
 //////////////////////////////////////////////////////////
@@ -923,7 +936,7 @@ public:
     // Final prediction result
     bool pred_taken = true;
     //OPTYPE_BRANCH_COND)
-    if (brtype == OPTYPE_CALL_DIRECT_COND) {
+    if (brtype == OPTYPE_CALL_DIRECT_COND || brtype == OPTYPE_CALL_INDIRECT_COND) {
 #ifndef NOTCLEARTEMPORARYVARIABLES
       clearTemporaryVariables();
 #endif
@@ -943,7 +956,7 @@ public:
       
       // Compute the prediction result of TAGE predictor
       HitBank = AltBank = -1;
-      HitPred = AltPred = btable.predict(pc);
+      HitPred = AltPred = btable.predict(pc); //'base predictor is called'
       for (int i=0; i<NHIST; i++) {
         if (gtable[i][GI[i]].tag == GTAG[i]) {
           AltBank = HitBank;
@@ -1007,7 +1020,7 @@ public:
   }
   
   void update(uint32_t pc, uint16_t brtype, bool taken, uint32_t target) {
-    if (brtype == OPTYPE_CALL_DIRECT_COND) {
+    if (brtype == OPTYPE_CALL_DIRECT_COND || brtype == OPTYPE_CALL_DIRECT_COND) {
 #ifndef NOTCLEARTEMPORARYVARIABLES
       clearTemporaryVariables();
       predict(pc, brtype); // re-calculate temporal variables
