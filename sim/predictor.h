@@ -187,6 +187,12 @@ public:
   
   // read n_th history
   bool read(int n) { return bhr[(n+ptr) & (HISTBUFFERLENGTH-1)]; }
+ 
+  //'adding return full BHR'
+  bool readwhole() {
+    return bhr;
+  }
+
 #else
 private:
   bool bhr[MAXHIST];
@@ -204,6 +210,11 @@ public:
   
   bool read(int n) {
     return bhr[n];
+  }
+
+  //'adding return full BHR'
+  bool readwhole() {
+    return bhr;
   }
 #endif
 };
@@ -511,7 +522,8 @@ public:
   // Generate prediction
   bool predict (uint32_t pc, bool &valid) {
     int LHIT = searchEntry(pc, getTag(pc));
-    if(LHIT >= 0) {
+    GlobalHistoryBuffer temp;
+    if(LHIT >= 0) {//'random change' -0
       return table[LHIT].predict(valid);
     }
     valid = false;
@@ -557,7 +569,9 @@ private:
   uint32_t getIndex(uint32_t pc, int shift=0) {
     return (pc & ((1 << BITS)-1)) >> shift ;
   }
-  
+  int output = 0;
+ //int a[100][100];
+ 
 public:
   int init() {
     for(int i=0; i<(1<<BITS); i++) { pred[i] = 0; }
@@ -567,16 +581,44 @@ public:
   
   bool predict(uint32_t pc) {
     //'My changes'
-    uint32_t output = 0;
+    //uint32_t output = 0;
     //if(pred[getIndex(pc)])
-      //output = output + 2;//W(getIndex(PC), i);
-    //else
-      //output = output - 2;//W(getIndex(PC), i);
-    //if(output >= 0)
+    GlobalHistoryBuffer temp;
+    uint32_t check = 0, last16 = 0;
+    bool check2[4096];
+    for(int i = 0; i < 4096; i++) {
+      check2[i] = temp.read(i);
+    }
+    //for(int i = 1; i < MAXHIST; i++) {
+    //check2 = temp.readwhole();
+    for(int i = 0; i < 4096; i++) {
+      //cout<<check2[i]<<"n\n";
+      check = check*10 + check2[i];
+    }
+    unsigned mask;
+    mask = (1 << 16) - 1;
+    //check = check % 8;
+    last16 = check & mask;
+    cout<<last16<<"p\n";
+//    cout<<getIndex(pc)<<"n\n";
+    if(last16 ^ getIndex(pc))
+      output = output + 1; //pred[check ^ getIndex(pc)];//W(getIndex(PC), i);
       //return 1;
-    //else
+    else
+      output = output - 1;//pred[check ^ getIndex(pc)];//W(getIndex(PC), i);
       //return 0;
-    return pred[getIndex(pc)];
+    //}
+    //cout<<output<<"n\n";
+    if(output >= 0)
+      return 1;
+    else
+      return 0;
+    //uint32_t check;
+    /*for(int i = 1; i < MAXHIST; i++) {
+      check = temp.read(i);
+    }*/
+    //cout<<check;
+    //return pred[getIndex(pc)];
   }
   
   void update(uint32_t pc, bool taken) {

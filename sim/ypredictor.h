@@ -568,15 +568,15 @@ public:
   bool predict(uint32_t pc) {
     //'My changes'
     uint32_t output = 0;
-    if(pred[getIndex(pc)])
-      output = output + 2;//W(getIndex(PC), i);
-    else
-      output = output - 2;//W(getIndex(PC), i);
-    if(output >= 0)
-      return 1;
-    else
-      return 0;
-    //return pred[getIndex(pc)];
+    //if(pred[getIndex(pc)])
+      //output = output + 2;//W(getIndex(PC), i);
+    //else
+      //output = output - 2;//W(getIndex(PC), i);
+    //if(output >= 0)
+      //return 1;
+    //else
+      //return 0;
+    return pred[getIndex(pc)];
   }
   
   void update(uint32_t pc, bool taken) {
