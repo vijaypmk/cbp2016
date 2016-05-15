@@ -4,5 +4,5 @@
   NUM_BR                      	 :   17837676
   NUM_UNCOND_BR               	 :     858555
   NUM_CONDITIONAL_BR          	 :   16979121
-  NUM_MISPREDICTIONS          	 :     285802
-  MISPRED_PER_1K_INST         	 :     0.7672
+  NUM_MISPREDICTIONS          	 :     248610
+  MISPRED_PER_1K_INST         	 :     0.6674

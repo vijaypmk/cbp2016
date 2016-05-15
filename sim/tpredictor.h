@@ -222,7 +222,7 @@ bool LowConf;
 bool HighConf;
 
 int LSUM;
-int8_t BIM;
+int8_t BIM;   //'my changes' - might be the PHT
 
 // utility class for index computation
 // this is the cyclic shift register for folding 
@@ -286,6 +286,8 @@ public:
 };
 #endif
 
+//'My changes' -definition
+
 class bentry			// TAGE bimodal table entry  
 {
 public:
@@ -300,6 +302,7 @@ public:
     hyst = 1;
   }
 };
+
 class gentry			// TAGE global table entry
 {
 public:
@@ -338,7 +341,7 @@ folded_history chgehl_i[NHISTGEHL + 1];	//utility for computing GEHL indices
 folded_history chrhsp_i[NRHSP + 1];	//utility for computing GEHL indices
 
 //For the TAGE predictor
-bentry *btable;			//bimodal TAGE table
+bentry *btable;			//bimodal TAGE table //'my changes' -initialization
 gentry *gtable[NHIST + 1];	// tagged TAGE tables
 
 
@@ -346,7 +349,7 @@ int TB[NHIST + 1];		// tag width for the different tagged tables
 int logg[NHIST + 1];		// log of number entries of the different tagged tables
 int GI[NHIST + 1];		// indexes to the different tables are computed only once  
 uint GTAG[NHIST + 1];	// tags for the different tables are computed only once  
-int BI;				// index of the bimodal table
+int BI;				// index of the bimodal table //'my changes' -might be the PC??
 bool pred_taken;		// prediction
 bool alttaken;			// alternate  TAGEprediction
 bool tage_pred;			// TAGE prediction
@@ -726,6 +729,7 @@ public:
   }
 
   // index function for the bimodal table
+  // 'my changes' -use this function
 
   int bindex (uint32_t PC)
   {
@@ -747,6 +751,7 @@ public:
     A = ((A << bank) & ((1 << logg[bank]) - 1)) + (A >> (logg[bank] - bank));
     return (A);
   }
+
 // gindex computes a full hash of PC, ghist and phist
   int gindex (unsigned int PC, int bank, int hist, folded_history * ch_i)
   {
@@ -923,13 +928,14 @@ public:
 #endif
   int INDEX;
 
+  //'my changes' -1
   bool getbim ()
   {
 
-    BIM = (btable[BI].pred << 1) + btable[BI >> HYSTSHIFT].hyst;
+    BIM = (btable[BI ^ GHIST].pred << 1) + btable[(BI  ^ GHIST)>> HYSTSHIFT].hyst;
     HighConf = (BIM == 0) || (BIM == 3);
     LowConf = !HighConf;
-    return (btable[BI].pred > 0);
+    return (btable[BI ^ GHIST].pred > 0);
   }
 
   void baseupdate (bool Taken)
@@ -942,8 +948,8 @@ public:
       }
     else if (inter > 0)
       inter--;
-    btable[BI].pred = inter >> 1;
-    btable[BI >> HYSTSHIFT].hyst = (inter & 1);
+    btable[BI ^ GHIST].pred = inter >> 1;
+    btable[(BI ^ GHIST) >> HYSTSHIFT].hyst = (inter & 1);
 
   };
 
@@ -1001,7 +1007,7 @@ public:
 	if (AltBank > 0)
 	  alttaken = (gtable[AltBank][GI[AltBank]].ctr >= 0);
 	else
-	  alttaken = getbim ();
+	  alttaken = getbim (); //'my changes' -prediction for base
 
 //if the entry is recognized as a newly allocated entry and 
 //USE_ALT_ON_NA is positive  use the alternate prediction
@@ -1022,7 +1028,7 @@ public:
       }
     else
       {
-	alttaken = getbim ();
+	alttaken = getbim (); //'my changes' -prediction for base
 	tage_pred = alttaken;
 	LongestMatchPred = alttaken;
 

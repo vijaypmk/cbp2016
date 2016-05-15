@@ -100,6 +100,14 @@
 #define UA_WIDTH 4
 #define TK_WIDTH 8
 
+
+
+//'My changes'
+//static UINT32 ghr = 0;
+static UINT32 phist = 0; // path history register
+
+
+
 //////////////////////////////////////////////////////
 // Base counter class
 //////////////////////////////////////////////////////
@@ -189,7 +197,7 @@ public:
   bool read(int n) { return bhr[(n+ptr) & (HISTBUFFERLENGTH-1)]; }
  
   //'adding return full BHR'
-  bool readwhole() {
+  bool* readwhole() {
     return bhr;
   }
 
@@ -213,7 +221,7 @@ public:
   }
 
   //'adding return full BHR'
-  bool readwhole() {
+  bool* readwhole() {
     return bhr;
   }
 #endif
@@ -556,13 +564,138 @@ public:
 };
 
 
+
+
+
 //////////////////////////////////////////////////////////
-// Base predictor for TAGE predictor
+// Gag Base predictor for TAGE predictor
 // This predictor is derived from CBP3 ISL-TAGE
 //////////////////////////////////////////////////////////
 
 template <int BITS, int HSFT>
-class Bimodal {
+class Gag {
+private:
+  bool pred[1 << BITS];
+  bool hyst[1 << (BITS-HSFT)];
+  uint32_t getIndex(uint32_t pc, int shift=0) {
+    return (pc & ((1 << BITS)-1)) >> shift ;
+  }
+  int output = 0;
+ //int a[100][100];
+ 
+public:
+  int init() {
+    for(int i=0; i<(1<<BITS); i++) { pred[i] = 0; }
+    for(int i=0; i<(1<<(BITS-HSFT)); i++) { hyst[i] = 1; }
+    return (1<<BITS)+(1<<(BITS-HSFT));
+  }
+  
+  bool predict(uint32_t pc) {
+    //'My changes'
+    //uint32_t output = 0;
+    //if(pred[getIndex(pc)])
+    GlobalHistoryBuffer temp;
+    uint32_t check = 0;
+    uint32_t last16;
+    uint32_t check2[4096];
+    bool *check10;
+    *check10 = temp.readwhole();
+    for(int i = 0; i < 4096; i++) {
+      check2[i] = (uint32_t) 0;//temp.read(i);
+    }
+    //for(int i = 1; i < MAXHIST; i++) {
+    //check2 = temp.readwhole();
+    for(int i = 0; i < 4096; i++) {
+      //cout<<check2[i]<<"n\n";
+      check = check*10 + check2[i];
+    }
+    //unsigned int mask;
+    unsigned int mask;
+    mask = (1 << 16) - 1;
+    //check = check % 8;
+    bool klk = phist;
+    last16 = check2[0];
+    //cout<<last16<<"\n";
+    //cout<<getIndex(pc)<<"n\n";
+    //cout<<pred[last16 ^ getIndex((pc))]<<"k\n";
+    //uint32_t phtIndex = last16;
+    //cout<<getIndex(pc)<<"n\n";
+    if(pred[0]) {
+      //output = output + 1; //pred[check ^ getIndex(pc)];//W(getIndex(PC), i);
+      //cout<<"l "<<pred[getIndex((pc))]<<endl;
+      return 1;
+    }
+    else {
+      //output = output - 1;//pred[check ^ getIndex(pc)];//W(getIndex(PC), i);
+      //cout<<"n "<<pred[getIndex((last16 ^ pc))]<<endl;
+      return 0;
+    }
+    //}
+    //cout<<output<<"n\n";
+    //if(output >= 0)
+      //return 1;
+    //else
+      //return 0;
+    //uint32_t check;
+    /*for(int i = 1; i < MAXHIST; i++) {
+      check = temp.read(i);
+    }*/
+    //cout<<check;
+    //return pred[getIndex(pc)];
+  }
+
+  bool retphtIndex(uint32_t pc) {
+    bool check3[4096];
+    GlobalHistoryBuffer temp2;
+    for(int i = 0; i < 4096; i++) {
+      check3[i] = temp2.read(i);
+     }
+    unsigned int mask;
+    uint32_t last16;
+    mask = (1 << 16) - 1;
+    last16 = *check3;
+    return(last16);
+  }
+
+  
+  void update(uint32_t pc, bool taken) {
+    GlobalHistoryBuffer temp;
+    uint32_t last16 = 0;
+    bool check2[4096];
+    for(int i = 0; i < 4096; i++) {
+      check2[i] = temp.read(i);
+    }
+    unsigned mask;
+    mask = (1 << 16) - 1;
+    //check = check % 8;
+    last16 = *check2;
+
+    int inter = (pred[getIndex(last16)] << 1) + hyst[getIndex((last16), HSFT)];
+    if(taken) {
+      if (inter < 3) { inter++; }
+    } else {
+      if (inter > 0) { inter--; }
+    }
+    pred[getIndex(last16)] = (inter >= 2);
+    hyst[getIndex((last16),HSFT)] = ((inter & 1)==1);
+  }
+};
+
+
+
+
+
+
+
+
+
+//////////////////////////////////////////////////////////
+// Gselect Base predictor for TAGE predictor
+// This predictor is derived from CBP3 ISL-TAGE
+//////////////////////////////////////////////////////////
+
+template <int BITS, int HSFT>
+class Gselect {
 private:
   bool pred[1 << BITS];
   bool hyst[1 << (BITS-HSFT)];
@@ -591,28 +724,35 @@ public:
     }
     //for(int i = 1; i < MAXHIST; i++) {
     //check2 = temp.readwhole();
-    for(int i = 0; i < 4096; i++) {
+    /*for(int i = 0; i < 4096; i++) {
       //cout<<check2[i]<<"n\n";
       check = check*10 + check2[i];
-    }
-    unsigned mask;
+    }*/
+    unsigned int mask;
     mask = (1 << 16) - 1;
     //check = check % 8;
-    last16 = check & mask;
-    cout<<last16<<"p\n";
-//    cout<<getIndex(pc)<<"n\n";
-    if(last16 ^ getIndex(pc))
-      output = output + 1; //pred[check ^ getIndex(pc)];//W(getIndex(PC), i);
-      //return 1;
-    else
-      output = output - 1;//pred[check ^ getIndex(pc)];//W(getIndex(PC), i);
-      //return 0;
+    last16 = *check2 & mask;
+    //cout<<last16<<"p\n";
+    //cout<<getIndex(pc)<<"n\n";
+    //cout<<pred[last16 ^ getIndex((pc))]<<"k\n";
+    //uint32_t phtIndex = last16 + pc;
+    //cout<<getIndex(pc)<<"n\n";
+    if(pred[getIndex((phist + pc))]) {
+      //output = output + 1; //pred[check ^ getIndex(pc)];//W(getIndex(PC), i);
+      //cout<<"l "<<pred[getIndex((pc))]<<endl;
+      return 1;
+    }
+    else {
+      //output = output - 1;//pred[check ^ getIndex(pc)];//W(getIndex(PC), i);
+      //cout<<"n "<<pred[getIndex((last16 ^ pc))]<<endl;
+      return 0;
+    }
     //}
     //cout<<output<<"n\n";
-    if(output >= 0)
-      return 1;
-    else
-      return 0;
+    //if(output >= 0)
+      //return 1;
+    //else
+      //return 0;
     //uint32_t check;
     /*for(int i = 1; i < MAXHIST; i++) {
       check = temp.read(i);
@@ -620,7 +760,193 @@ public:
     //cout<<check;
     //return pred[getIndex(pc)];
   }
+
+  bool retphtIndex(uint32_t pc) {
+    bool check3[4096];
+    GlobalHistoryBuffer temp2;
+    for(int i = 0; i < 4096; i++) {
+      check3[i] = temp2.read(i);
+     }
+    unsigned int mask;
+    uint32_t last16;
+    mask = (1 << 16) - 1;
+    last16 = *check3 & mask;
+    return(phist + pc);
+  }
+
   
+  void update(uint32_t pc, bool taken) {
+    GlobalHistoryBuffer temp;
+    uint32_t last16 = 0;
+    bool check2[4096];
+    for(int i = 0; i < 4096; i++) {
+      check2[i] = temp.read(i);
+    }
+    unsigned mask;
+    mask = (1 << 16) - 1;
+    //check = check % 8;
+    last16 = *check2 & mask;
+
+    int inter = (pred[getIndex(phist + pc)] << 1) + hyst[getIndex((pc + phist), HSFT)];
+    if(taken) {
+      if (inter < 3) { inter++; }
+    } else {
+      if (inter > 0) { inter--; }
+    }
+    pred[getIndex(phist + pc)] = (inter >= 2);
+    hyst[getIndex((pc + phist),HSFT)] = ((inter & 1)==1);
+  }
+};
+
+
+
+
+
+
+
+
+
+
+//////////////////////////////////////////////////////////
+// Gshare Base predictor for TAGE predictor
+// This predictor is derived from CBP3 ISL-TAGE
+//////////////////////////////////////////////////////////
+
+template <int BITS, int HSFT>
+class Gshare {
+private:
+  bool pred[1 << BITS];
+  bool hyst[1 << (BITS-HSFT)];
+  uint32_t getIndex(uint32_t pc, int shift=0) {
+    return (pc & ((1 << BITS)-1)) >> shift ;
+  }
+  int output = 0;
+ //int a[100][100];
+ 
+public:
+  int init() {
+    for(int i=0; i<(1<<BITS); i++) { pred[i] = 0; }
+    for(int i=0; i<(1<<(BITS-HSFT)); i++) { hyst[i] = 1; }
+    return (1<<BITS)+(1<<(BITS-HSFT));
+  }
+  
+  bool predict(uint32_t pc) {
+    //'My changes'
+    //uint32_t output = 0;
+    //if(pred[getIndex(pc)])
+    GlobalHistoryBuffer temp;
+    uint32_t check = 0, last16 = 0;
+    bool check2[4096];
+    for(int i = 0; i < 4096; i++) {
+      check2[i] = temp.read(i);
+    }
+    //for(int i = 1; i < MAXHIST; i++) {
+    //check2 = temp.readwhole();
+    /*for(int i = 0; i < 4096; i++) {
+      //cout<<check2[i]<<"n\n";
+      check = check*10 + check2[i];
+    }*/
+    unsigned int mask;
+    mask = (1 << 16) - 1;
+    //check = check % 8;
+    last16 = *check2 & mask;
+    //cout<<last16<<"p\n";
+    //cout<<getIndex(pc)<<"n\n";
+    //cout<<pred[last16 ^ getIndex((pc))]<<"k\n";
+    //uint32_t phtIndex = last16 ^ pc;
+    //cout<<getIndex(pc)<<"n\n";
+    if(pred[getIndex((phist ^ pc))]) {
+      //output = output + 1; //pred[check ^ getIndex(pc)];//W(getIndex(PC), i);
+      //cout<<"l "<<pred[getIndex((pc))]<<endl;
+      return 1;
+    }
+    else {
+      //output = output - 1;//pred[check ^ getIndex(pc)];//W(getIndex(PC), i);
+      //cout<<"n "<<pred[getIndex((last16 ^ pc))]<<endl;
+      return 0;
+    }
+    //}
+    //cout<<output<<"n\n";
+    //if(output >= 0)
+      //return 1;
+    //else
+      //return 0;
+    //uint32_t check;
+    /*for(int i = 1; i < MAXHIST; i++) {
+      check = temp.read(i);
+    }*/
+    //cout<<check;
+    //return pred[getIndex(pc)];
+  }
+
+  bool retphtIndex(uint32_t pc) {
+    bool check3[4096];
+    GlobalHistoryBuffer temp2;
+    for(int i = 0; i < 4096; i++) {
+      check3[i] = temp2.read(i);
+     }
+    unsigned int mask;
+    uint32_t last16;
+    mask = (1 << 16) - 1;
+    last16 = *check3 & mask;
+    return(phist ^ pc);
+  }
+
+  
+  void update(uint32_t pc, bool taken) {
+    GlobalHistoryBuffer temp;
+    uint32_t last16 = 0;
+    bool check2[4096];
+    for(int i = 0; i < 4096; i++) {
+      check2[i] = temp.read(i);
+    }
+    unsigned mask;
+    mask = (1 << 16) - 1;
+    //check = check % 8;
+    last16 = *check2 & mask;
+
+    int inter = (pred[getIndex(phist ^ pc)] << 1) + hyst[getIndex((pc ^ phist), HSFT)];
+    if(taken) {
+      if (inter < 3) { inter++; }
+    } else {
+      if (inter > 0) { inter--; }
+    }
+    pred[getIndex(phist ^ pc)] = (inter >= 2);
+    hyst[getIndex((pc ^ phist),HSFT)] = ((inter & 1)==1);
+  }
+
+  //'My changes'
+
+};
+
+
+
+
+//////////////////////////////////////////////////////////
+// Bimodal base predictor for TAGE predictor
+// This predictor is done by Vijay Muthukumaran
+//////////////////////////////////////////////////////////
+
+template <int BITS, int HSFT>
+class Bimodal {
+  private:
+    bool pred[1 << BITS];
+    bool hyst[1 << (BITS-HSFT)];
+    uint32_t getIndex(uint32_t pc, int shift=0) {
+      return (pc & ((1 << BITS)-1)) >> shift ;
+    }
+  public:
+
+  int init() {
+    for(int i=0; i<(1<<BITS); i++) { pred[i] = 0; }
+    for(int i=0; i<(1<<(BITS-HSFT)); i++) { hyst[i] = 1; }
+    return (1<<BITS)+(1<<(BITS-HSFT));
+  }
+
+  bool predict(uint32_t pc) {
+    //cout<<getIndex(pc)<<"n\n";
+    return pred[getIndex(pc)];
+  }
   void update(uint32_t pc, bool taken) {
     int inter = (pred[getIndex(pc)] << 1) + hyst[getIndex(pc, HSFT)];
     if(taken) {
@@ -635,6 +961,15 @@ public:
   //'My changes'
 
 };
+
+
+
+
+
+
+
+
+
 
 //////////////////////////////////////////////////////////
 // Global component for TAGE predictor
@@ -707,9 +1042,10 @@ class my_predictor {
   uint32_t GI[NHIST];
   uint32_t GTAG[NHIST];
   
-  // Intermediate prediction result for TAGE
-  bool HitPred, AltPred, TagePred;
-  int HitBank, AltBank, TageBank;
+  // Intermediate prediction result for TAGE //'made changes'
+  bool HitPred, AltPred, TagePred, HitPredB, HitPredG, diff;
+  int HitBank, AltBank, TageBank, HitBankB, HitBankG;
+  int u = 0; //counter 'made changes'
   
   // Intermediate prediction result for statistical corrector predictor
   bool SCPred;
@@ -738,6 +1074,10 @@ class my_predictor {
   
   // Prediction Tables
   Bimodal<LOGB,HYSTSHIFT> btable; // bimodal table
+  Gshare<LOGB,HYSTSHIFT> gstable; //gshare table
+  Gselect<LOGB,HYSTSHIFT> gseltable; //gshare table
+  Gag<LOGB,HYSTSHIFT> gagtable; //gshare table
+
   GEntry *gtable[NHIST]; // global components
   SCounter<CSTAT> *ctable[2]; // statistical corrector predictor table
   LoopPredictor ltable; // loop predictor
@@ -745,7 +1085,7 @@ class my_predictor {
   // Branch Histories
   GlobalHistory ghist; // global history register
   LocalHistory lhist; // local history table
-  uint32_t phist; // path history register
+  //uint32_t phist; // path history register
 
   // Profiling Counters
   SCounter<DC_WIDTH> DC; // difficulty counter
@@ -884,7 +1224,18 @@ public:
     
     // Setup bimodal table
     budget += btable.init();
-    
+
+    // Setup gshare table
+    budget += gstable.init();
+
+    // Setup gshare table
+    budget += gseltable.init();
+
+    // Setup gshare table
+    budget += gagtable.init();
+
+
+
     // Setup statistic corrector predictor
     ctable[0] = new SCounter<CSTAT>[1 << LOGC];
     ctable[1] = new SCounter<CSTAT>[1 << LOGC];
@@ -898,7 +1249,7 @@ public:
     budget += ltable.init();
     
     // Setup history register & table
-    phist = 0;
+    //phist = 0;
     ghist.init();
     lhist.init();
     ghist.setup(m, logg, TB, cg, LOGC-CBANK);
@@ -998,7 +1349,35 @@ public:
       
       // Compute the prediction result of TAGE predictor
       HitBank = AltBank = -1;
-      HitPred = AltPred = btable.predict(pc); //'base predictor is called'
+      HitPredB = AltPred = btable.predict(pc); //'base predictor is called'
+      //cout<<"HpB "<<HitPredB<<endl;
+      //HitPredG = AltPred = gstable.predict(pc); //'gshare base predictor is called'
+      //cout<<"HpG "<<HitPredG<<endl;
+      HitPredG = AltPred = gseltable.predict(pc); //'gselect base predictor is called'
+
+      //HitPredG = AltPred = gagtable.predict(pc); //'gag base predictor is called'
+
+      
+
+      diff = HitPredB - HitPredG;
+      if(diff == 1) {
+        u++;
+      }
+      else if(diff == -1) {
+        u--;
+      }
+      else
+        u = u;
+      //cout<<u<<endl;
+      if(u >= 1){       
+        HitPred = HitPredB;
+        //cout<<"Hp1 "<<HitPred<<endl;
+      }
+      else {
+        HitPred = HitPredG;
+        //cout<<"Hp2 "<<HitPred<<endl;
+      }
+
       for (int i=0; i<NHIST; i++) {
         if (gtable[i][GI[i]].tag == GTAG[i]) {
           AltBank = HitBank;
@@ -1158,11 +1537,23 @@ public:
           if (AltBank >= 0) {
             gtable[AltBank][GI[AltBank]].c.update(taken);
           } else {
-            btable.update(pc, taken);
+            if(u >= 1)
+              btable.update(pc, taken);
+            else
+              //gstable.update(gstable.retphtIndex(pc), taken);
+              gseltable.update(gseltable.retphtIndex(pc), taken);
+              //gagtable.update(gagtable.retphtIndex(pc), taken);
+
           }
         }
       } else {
-        btable.update(pc, taken);
+        if(u >= 1)
+          btable.update(pc, taken);
+        else
+          //gstable.update(gstable.retphtIndex(pc), taken);
+          gseltable.update(gseltable.retphtIndex(pc), taken);
+          //gagtable.update(gagtable.retphtIndex(pc), taken);
+
       }
       
       // Update useful bit counter
