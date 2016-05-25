@@ -592,84 +592,20 @@ public:
   
   bool predict(uint32_t pc) {
     //'My changes'
-    //uint32_t output = 0;
-    //if(pred[getIndex(pc)])
-    GlobalHistoryBuffer temp;
-    uint32_t check = 0;
-    uint32_t last16;
-    uint32_t check2[4096];
-    bool *check10;
-    *check10 = temp.readwhole();
-    for(int i = 0; i < 4096; i++) {
-      check2[i] = (uint32_t) 0;//temp.read(i);
-    }
-    //for(int i = 1; i < MAXHIST; i++) {
-    //check2 = temp.readwhole();
-    for(int i = 0; i < 4096; i++) {
-      //cout<<check2[i]<<"n\n";
-      check = check*10 + check2[i];
-    }
-    //unsigned int mask;
-    unsigned int mask;
-    mask = (1 << 16) - 1;
-    //check = check % 8;
-    bool klk = phist;
-    last16 = check2[0];
-    //cout<<last16<<"\n";
-    //cout<<getIndex(pc)<<"n\n";
-    //cout<<pred[last16 ^ getIndex((pc))]<<"k\n";
-    //uint32_t phtIndex = last16;
-    //cout<<getIndex(pc)<<"n\n";
     if(pred[0]) {
-      //output = output + 1; //pred[check ^ getIndex(pc)];//W(getIndex(PC), i);
-      //cout<<"l "<<pred[getIndex((pc))]<<endl;
       return 1;
     }
     else {
-      //output = output - 1;//pred[check ^ getIndex(pc)];//W(getIndex(PC), i);
-      //cout<<"n "<<pred[getIndex((last16 ^ pc))]<<endl;
       return 0;
     }
-    //}
-    //cout<<output<<"n\n";
-    //if(output >= 0)
-      //return 1;
-    //else
-      //return 0;
-    //uint32_t check;
-    /*for(int i = 1; i < MAXHIST; i++) {
-      check = temp.read(i);
-    }*/
-    //cout<<check;
-    //return pred[getIndex(pc)];
   }
 
   bool retphtIndex(uint32_t pc) {
-    bool check3[4096];
-    GlobalHistoryBuffer temp2;
-    for(int i = 0; i < 4096; i++) {
-      check3[i] = temp2.read(i);
-     }
-    unsigned int mask;
-    uint32_t last16;
-    mask = (1 << 16) - 1;
-    last16 = *check3;
-    return(last16);
+    return(pc);
   }
 
   
   void update(uint32_t pc, bool taken) {
-    GlobalHistoryBuffer temp;
-    uint32_t last16 = 0;
-    bool check2[4096];
-    for(int i = 0; i < 4096; i++) {
-      check2[i] = temp.read(i);
-    }
-    unsigned mask;
-    mask = (1 << 16) - 1;
-    //check = check % 8;
-    last16 = *check2;
-
     int inter = (pred[getIndex(last16)] << 1) + hyst[getIndex((last16), HSFT)];
     if(taken) {
       if (inter < 3) { inter++; }
@@ -703,7 +639,7 @@ private:
     return (pc & ((1 << BITS)-1)) >> shift ;
   }
   int output = 0;
- //int a[100][100];
+
  
 public:
   int init() {
@@ -714,79 +650,20 @@ public:
   
   bool predict(uint32_t pc) {
     //'My changes'
-    //uint32_t output = 0;
-    //if(pred[getIndex(pc)])
-    GlobalHistoryBuffer temp;
-    uint32_t check = 0, last16 = 0;
-    bool check2[4096];
-    for(int i = 0; i < 4096; i++) {
-      check2[i] = temp.read(i);
-    }
-    //for(int i = 1; i < MAXHIST; i++) {
-    //check2 = temp.readwhole();
-    /*for(int i = 0; i < 4096; i++) {
-      //cout<<check2[i]<<"n\n";
-      check = check*10 + check2[i];
-    }*/
-    unsigned int mask;
-    mask = (1 << 16) - 1;
-    //check = check % 8;
-    last16 = *check2 & mask;
-    //cout<<last16<<"p\n";
-    //cout<<getIndex(pc)<<"n\n";
-    //cout<<pred[last16 ^ getIndex((pc))]<<"k\n";
-    //uint32_t phtIndex = last16 + pc;
-    //cout<<getIndex(pc)<<"n\n";
     if(pred[getIndex((phist + pc))]) {
-      //output = output + 1; //pred[check ^ getIndex(pc)];//W(getIndex(PC), i);
-      //cout<<"l "<<pred[getIndex((pc))]<<endl;
       return 1;
     }
     else {
-      //output = output - 1;//pred[check ^ getIndex(pc)];//W(getIndex(PC), i);
-      //cout<<"n "<<pred[getIndex((last16 ^ pc))]<<endl;
       return 0;
     }
-    //}
-    //cout<<output<<"n\n";
-    //if(output >= 0)
-      //return 1;
-    //else
-      //return 0;
-    //uint32_t check;
-    /*for(int i = 1; i < MAXHIST; i++) {
-      check = temp.read(i);
-    }*/
-    //cout<<check;
-    //return pred[getIndex(pc)];
   }
 
   bool retphtIndex(uint32_t pc) {
-    bool check3[4096];
-    GlobalHistoryBuffer temp2;
-    for(int i = 0; i < 4096; i++) {
-      check3[i] = temp2.read(i);
-     }
-    unsigned int mask;
-    uint32_t last16;
-    mask = (1 << 16) - 1;
-    last16 = *check3 & mask;
     return(phist + pc);
   }
 
   
   void update(uint32_t pc, bool taken) {
-    GlobalHistoryBuffer temp;
-    uint32_t last16 = 0;
-    bool check2[4096];
-    for(int i = 0; i < 4096; i++) {
-      check2[i] = temp.read(i);
-    }
-    unsigned mask;
-    mask = (1 << 16) - 1;
-    //check = check % 8;
-    last16 = *check2 & mask;
-
     int inter = (pred[getIndex(phist + pc)] << 1) + hyst[getIndex((pc + phist), HSFT)];
     if(taken) {
       if (inter < 3) { inter++; }
@@ -797,9 +674,6 @@ public:
     hyst[getIndex((pc + phist),HSFT)] = ((inter & 1)==1);
   }
 };
-
-
-
 
 
 
@@ -821,7 +695,6 @@ private:
     return (pc & ((1 << BITS)-1)) >> shift ;
   }
   int output = 0;
- //int a[100][100];
  
 public:
   int init() {
@@ -832,79 +705,20 @@ public:
   
   bool predict(uint32_t pc) {
     //'My changes'
-    //uint32_t output = 0;
-    //if(pred[getIndex(pc)])
-    GlobalHistoryBuffer temp;
-    uint32_t check = 0, last16 = 0;
-    bool check2[4096];
-    for(int i = 0; i < 4096; i++) {
-      check2[i] = temp.read(i);
-    }
-    //for(int i = 1; i < MAXHIST; i++) {
-    //check2 = temp.readwhole();
-    /*for(int i = 0; i < 4096; i++) {
-      //cout<<check2[i]<<"n\n";
-      check = check*10 + check2[i];
-    }*/
-    unsigned int mask;
-    mask = (1 << 16) - 1;
-    //check = check % 8;
-    last16 = *check2 & mask;
-    //cout<<last16<<"p\n";
-    //cout<<getIndex(pc)<<"n\n";
-    //cout<<pred[last16 ^ getIndex((pc))]<<"k\n";
-    //uint32_t phtIndex = last16 ^ pc;
-    //cout<<getIndex(pc)<<"n\n";
     if(pred[getIndex((phist ^ pc))]) {
-      //output = output + 1; //pred[check ^ getIndex(pc)];//W(getIndex(PC), i);
-      //cout<<"l "<<pred[getIndex((pc))]<<endl;
       return 1;
     }
     else {
-      //output = output - 1;//pred[check ^ getIndex(pc)];//W(getIndex(PC), i);
-      //cout<<"n "<<pred[getIndex((last16 ^ pc))]<<endl;
       return 0;
     }
-    //}
-    //cout<<output<<"n\n";
-    //if(output >= 0)
-      //return 1;
-    //else
-      //return 0;
-    //uint32_t check;
-    /*for(int i = 1; i < MAXHIST; i++) {
-      check = temp.read(i);
-    }*/
-    //cout<<check;
-    //return pred[getIndex(pc)];
   }
 
   bool retphtIndex(uint32_t pc) {
-    bool check3[4096];
-    GlobalHistoryBuffer temp2;
-    for(int i = 0; i < 4096; i++) {
-      check3[i] = temp2.read(i);
-     }
-    unsigned int mask;
-    uint32_t last16;
-    mask = (1 << 16) - 1;
-    last16 = *check3 & mask;
     return(phist ^ pc);
   }
 
   
   void update(uint32_t pc, bool taken) {
-    GlobalHistoryBuffer temp;
-    uint32_t last16 = 0;
-    bool check2[4096];
-    for(int i = 0; i < 4096; i++) {
-      check2[i] = temp.read(i);
-    }
-    unsigned mask;
-    mask = (1 << 16) - 1;
-    //check = check % 8;
-    last16 = *check2 & mask;
-
     int inter = (pred[getIndex(phist ^ pc)] << 1) + hyst[getIndex((pc ^ phist), HSFT)];
     if(taken) {
       if (inter < 3) { inter++; }
