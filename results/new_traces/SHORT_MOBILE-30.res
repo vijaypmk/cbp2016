@@ -27,10 +27,19 @@ cg[3] = 11
 cg[4] = 0
 cl[0] = 2
 cl[1] = 1
-cl[2] = 4
-cl[3] = 5
-cl[4] = 7
-cl[5] = 9
-cl[6] = 12
-Total Budget: Limit:263168, 283262 35407
-.....
+cl[2] = 5
+cl[3] = 8
+cl[4] = 12
+Total Budget: Limit:263168, 17024638 2128079
+..............................
+..............................
+..............................
+..............................
+...
+  TRACE 	 : ../traces/SHORT_MOBILE-30.bt9.trace.gz
+  NUM_INSTRUCTIONS            	 :  658661227
+  NUM_BR                      	 :  123358312
+  NUM_UNCOND_BR               	 :   11682420
+  NUM_CONDITIONAL_BR          	 :  111675892
+  NUM_MISPREDICTIONS          	 :     128153
+  MISPRED_PER_1K_INST         	 :     0.1946

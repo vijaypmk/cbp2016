@@ -606,14 +606,14 @@ public:
 
   
   void update(uint32_t pc, bool taken) {
-    int inter = (pred[getIndex(last16)] << 1) + hyst[getIndex((last16), HSFT)];
+    int inter = (pred[getIndex(pc)] << 1) + hyst[getIndex((pc), HSFT)];
     if(taken) {
       if (inter < 3) { inter++; }
     } else {
       if (inter > 0) { inter--; }
     }
-    pred[getIndex(last16)] = (inter >= 2);
-    hyst[getIndex((last16),HSFT)] = ((inter & 1)==1);
+    pred[getIndex(pc)] = (inter >= 2);
+    hyst[getIndex((pc),HSFT)] = ((inter & 1)==1);
   }
 };
 
@@ -857,7 +857,8 @@ class my_predictor {
   uint32_t GTAG[NHIST];
   
   // Intermediate prediction result for TAGE //'made changes'
-  bool HitPred, AltPred, TagePred, HitPredB, HitPredG, diff;
+  bool HitPred, AltPred, TagePred, HitPredB, HitPredG;
+  int diff = 0;
   int HitBank, AltBank, TageBank, HitBankB, HitBankG;
   int u = 0; //counter 'made changes'
   
@@ -1016,14 +1017,14 @@ public:
     }
 
     // Setup global components
-    logg[STEP[0]] = LOGG + 1;
-    logg[STEP[1]] = LOGG + 3;
-    logg[STEP[2]] = LOGG + 2;
-    logg[STEP[3]] = LOGG - 1;
+    logg[STEP[0]] = LOGG + 1; //1
+    logg[STEP[1]] = LOGG + 3;  //3
+    logg[STEP[2]] = LOGG + 10;  //5, 2
+    logg[STEP[3]] = LOGG;       // -1
     TB[STEP[0]] =  7;
     TB[STEP[1]] =  9;
-    TB[STEP[2]] = 11;
-    TB[STEP[3]] = 13;
+    TB[STEP[2]] = 11; //15 //'my changes'
+    TB[STEP[3]] = 13; //13
     for(int i=0; i<NSTEP; i++) {
       gtable[STEP[i]] = new GEntry[1 << logg[STEP[i]]];
       budget += (2/*U*/+3/*C*/+TB[STEP[i]]) * (1<<logg[STEP[i]]);
@@ -1046,7 +1047,7 @@ public:
     budget += gseltable.init();
 
     // Setup gshare table
-    budget += gagtable.init();
+    //budget += gagtable.init();
 
 
 
@@ -1165,15 +1166,25 @@ public:
       HitBank = AltBank = -1;
       HitPredB = AltPred = btable.predict(pc); //'base predictor is called'
       //cout<<"HpB "<<HitPredB<<endl;
-      //HitPredG = AltPred = gstable.predict(pc); //'gshare base predictor is called'
+      HitPredG = AltPred = gstable.predict(pc); //'gshare base predictor is called'
       //cout<<"HpG "<<HitPredG<<endl;
-      HitPredG = AltPred = gseltable.predict(pc); //'gselect base predictor is called'
+      //HitPredG = AltPred = gseltable.predict(pc); //'gselect base predictor is called'
 
       //HitPredG = AltPred = gagtable.predict(pc); //'gag base predictor is called'
 
       
-
-      diff = HitPredB - HitPredG;
+      //'my changes' -new diff
+      if(HitPredB == 0 && HitPredG == 0)
+        diff = 0;
+      else if(HitPredB == 0 && HitPredG == 1)
+        diff = -1; 
+      else if(HitPredB == 1 && HitPredG == 0)
+        diff = 1;     
+      else if(HitPredB == 1 && HitPredG == 1)
+        diff = 0; 
+      else
+        diff = diff;
+      //diff = HitPredB - HitPredG;
       if(diff == 1) {
         u++;
       }
@@ -1351,22 +1362,38 @@ public:
           if (AltBank >= 0) {
             gtable[AltBank][GI[AltBank]].c.update(taken);
           } else {
-            if(u >= 1)
-              btable.update(pc, taken);
-            else
-              gstable.update(gstable.retphtIndex(pc), taken);
+            //if(u >= 1)
+              //btable.update(pc, taken);
+            //else
+              //gstable.update(gstable.retphtIndex(pc), taken);
               //gseltable.update(gseltable.retphtIndex(pc), taken);
               //gagtable.update(gagtable.retphtIndex(pc), taken);
+              //'my changes' -new update
+              if(diff == 0)
+                //btable.update(pc, taken);
+                  gstable.update(gstable.retphtIndex(pc), taken);
+              else
+                  btable.update(pc, taken);
+                //gstable.update(gstable.retphtIndex(pc), taken);
+                //gseltable.update(gseltable.retphtIndex(pc), taken);
+
 
           }
         }
       } else {
-        if(u >= 1)
-          btable.update(pc, taken);
-        else
-          gstable.update(gstable.retphtIndex(pc), taken);
+        //if(u >= 1)
+        //  btable.update(pc, taken);
+        //else
+          //gstable.update(gstable.retphtIndex(pc), taken);
           //gseltable.update(gseltable.retphtIndex(pc), taken);
           //gagtable.update(gagtable.retphtIndex(pc), taken);
+              if(diff == 0)
+                //btable.update(pc, taken);
+                gstable.update(gstable.retphtIndex(pc), taken);
+             else
+                btable.update(pc, taken);
+                //gstable.update(gstable.retphtIndex(pc), taken);
+                //gseltable.update(gseltable.retphtIndex(pc), taken);
 
       }
       
