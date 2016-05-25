@@ -30,6 +30,60 @@
 #include <inttypes.h>
 #include <math.h>
 
+
+
+///////////////////////////////////////////////////////////////////
+//Perceptron///////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+
+#ifndef PERCEPTRON_H
+#define PERCEPTRON_H
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+///////////////////////////perceptron function declarations
+
+
+typedef struct Perceptron {
+    unsigned numInputs_;
+    double *weights_;
+    double threshold_;
+    double trainingRate_;
+} 
+Perceptron;
+
+
+//Public
+Perceptron *Perceptron_new(unsigned numOfInputs, double trainingRate);
+double Perceptron_getValue(const Perceptron *perceptron, const bool inputs[]);
+void Perceptron_setTrainingRate(Perceptron *perceptron, double trainingRate);
+void Perceptron_train(Perceptron *perceptron, const bool inputs[], int expectedResult);
+int Perceptron_getResult(const Perceptron *perceptron, const bool inputs[]);
+double Perceptron_getWeightAt(const Perceptron *perceptron, unsigned index);
+const double *Perceptron_getWeights(const Perceptron *perceptron);
+unsigned Perceptron_getNumOfInputs(const Perceptron *perceptron);
+double Perceptron_getThreshold(const Perceptron *perceptron);
+double Perceptron_getTrainingRate(const Perceptron *perceptron);
+void Perceptron_setWeightAt(Perceptron *perceptron, unsigned index, double weight);
+void Perceptron_setWeights(Perceptron *perceptron, const double *weights);
+void Perceptron_setThreshold(Perceptron *perceptron, double threshold);
+
+
+
+//Private
+double _Perceptron_getRandomDouble();
+void _Perceptron_changeWeights(Perceptron *perceptron, int actualResult, int desiredResult, const bool inputs[]);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+
+
+
 // #define RESTRICT_VERSION
 
 #ifndef RESTRICT_VERSION
@@ -47,10 +101,10 @@
 // Table configuration parameters
 #define NSTEP 4
 #define NDIFF 3
-#define NALLOC 5//4,5,6,7
+#define NALLOC 7//5//4,5,6,7 //'my changes' -for unlimited
 #define NHIST 20
 #define NSTAT 5
-#define MSTAT 5//5,6,7
+#define MSTAT 7//5//5,6,7 //'my changes' -for unlimited
 #define TSTAT (NSTAT+MSTAT+1)
 
 // Local global branch history ratio
@@ -999,6 +1053,11 @@ public:
   }
 };
 
+
+static int k = 0;
+static bool Taken;
+static bool pred_taken = true;
+
 //////////////////////////////////////////////////////////
 // Put it all together.
 // The predictor main component class
@@ -1042,10 +1101,10 @@ class my_predictor {
   uint32_t GI[NHIST];
   uint32_t GTAG[NHIST];
   
-  // Intermediate prediction result for TAGE //'made changes'
+  // Intermediate prediction result for TAGE //'my changes'
   bool HitPred, AltPred, TagePred, HitPredB, HitPredG, diff;
   int HitBank, AltBank, TageBank, HitBankB, HitBankG;
-  int u = 0; //counter 'made changes'
+  int u = 0; //counter 'my changes'
   
   // Intermediate prediction result for statistical corrector predictor
   bool SCPred;
@@ -1229,10 +1288,10 @@ public:
     budget += gstable.init();
 
     // Setup gshare table
-    budget += gseltable.init();
+    //budget += gseltable.init();
 
     // Setup gshare table
-    budget += gagtable.init();
+    //budget += gagtable.init();
 
 
 
@@ -1323,11 +1382,14 @@ public:
   //////////////////////////////////////////////////////////////
   // Actual branch prediction and training algorithm
   //////////////////////////////////////////////////////////////
-  
+ 
+  //static int k = 0;
+  //static bool Taken;
+  //static bool pred_taken = true;
   //compute the prediction
   bool predict(uint32_t pc, uint16_t brtype) {
     // Final prediction result
-    bool pred_taken = true;
+    //bool pred_taken = true;
     //OPTYPE_BRANCH_COND)
     if (brtype == OPTYPE_CALL_DIRECT_COND || brtype == OPTYPE_CALL_INDIRECT_COND) {
 #ifndef NOTCLEARTEMPORARYVARIABLES
@@ -1351,15 +1413,16 @@ public:
       HitBank = AltBank = -1;
       HitPredB = AltPred = btable.predict(pc); //'base predictor is called'
       //cout<<"HpB "<<HitPredB<<endl;
-      //HitPredG = AltPred = gstable.predict(pc); //'gshare base predictor is called'
+      HitPredG = AltPred = gstable.predict(pc); //'gshare base predictor is called'
       //cout<<"HpG "<<HitPredG<<endl;
-      HitPredG = AltPred = gseltable.predict(pc); //'gselect base predictor is called'
+      //HitPredG = AltPred = gseltable.predict(pc); //'gselect base predictor is called'
 
       //HitPredG = AltPred = gagtable.predict(pc); //'gag base predictor is called'
 
       
 
       diff = HitPredB - HitPredG;
+      //cout<<HitPredG<<endl;
       if(diff == 1) {
         u++;
       }
@@ -1436,11 +1499,26 @@ public:
       }
 #endif
     }
-    
+   bool X[] = {loopPred,SCPred,TagePred};
+      Perceptron *p = Perceptron_new(3,0.7);
+          if(k<1000)
+                {
+                      Perceptron_train(p,X,Taken);
+                      k++;
+                          }
+              else
+                    {
+                          //pred_taken = Perceptron_getResult(p,X);
+                              k++;
+                                  }
+      //             return pred_taken;
     return pred_taken;
   }
-  
+
+  //bool Taken;
+
   void update(uint32_t pc, uint16_t brtype, bool taken, uint32_t target) {
+    Taken = taken;
     if (brtype == OPTYPE_CALL_DIRECT_COND || brtype == OPTYPE_CALL_DIRECT_COND) {
 #ifndef NOTCLEARTEMPORARYVARIABLES
       clearTemporaryVariables();
@@ -1528,7 +1606,7 @@ public:
       // This counter represent the prediction accuracy of the
       // TAGE branch predictor.
       DC.add((TagePred == taken) ? -1 : 32);
-      
+      static int v = 0, vv = 0;
       // Update prediction tables
       // This part is same with ISL-TAGE branch predictor.
       if (HitBank >= 0) {
@@ -1537,17 +1615,47 @@ public:
           if (AltBank >= 0) {
             gtable[AltBank][GI[AltBank]].c.update(taken);
           } else {
-            if(u >= 1)
-              btable.update(pc, taken);
-            else
-              gstable.update(gstable.retphtIndex(pc), taken);
+            //if(u >= 1)
+             // btable.update(pc, taken);
+            //else
+             // gstable.update(gstable.retphtIndex(pc), taken);
               //gseltable.update(gseltable.retphtIndex(pc), taken);
               //gagtable.update(gagtable.retphtIndex(pc), taken);
+        bool X[] = {HitPredB,HitPredG,TagePred};
+        Perceptron *p = Perceptron_new(3,0.7);
+        if(v<1000)
+          {
+            Perceptron_train(p,X,Taken);
+            v++;
+          }
+        else
+          {
+            vv = Perceptron_getResult(p,X);
+            v++;
+          }
+        if(vv >= 1)    
+          btable.update(pc, taken);
+        else
+          gstable.update(gstable.retphtIndex(pc), taken);
+          //gseltable.update(gseltable.retphtIndex(pc), taken);
+          //gagtable.update(gagtable.retphtIndex(pc), taken);
 
           }
         }
       } else {
-        if(u >= 1)
+        bool X[] = {HitPredB,HitPredG,TagePred};
+        Perceptron *p = Perceptron_new(3,0.7);
+        if(v<1000)
+          {
+            Perceptron_train(p,X,Taken);
+            v++;
+          }
+        else
+          {
+            vv = Perceptron_getResult(p,X);
+            v++;
+          }
+        if(vv >= 1)
           btable.update(pc, taken);
         else
           gstable.update(gstable.retphtIndex(pc), taken);

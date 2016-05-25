@@ -115,7 +115,7 @@ PREDICTOR::PREDICTOR(void){
 bool   PREDICTOR::GetPrediction(UINT64 PC){
 
   UINT32 phtIndex   = (PC^ghr) % (numPhtEntries);
-  cout<<ghr<<"n\n";
+  //cout<<ghr<<"n\n";
   UINT32 phtCounter = pht[phtIndex];
   //cout<<phtCounter<<"n\n";
 
